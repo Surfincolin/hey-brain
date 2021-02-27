@@ -1,2 +1,2 @@
-# hey-brain
+# Hey Brain!
 OpenBCI base pattern recognition application.
