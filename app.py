@@ -43,7 +43,7 @@ class Application(tk.Frame):
 
     self.record = tk.Button(self)
     self.record['text'] = "Record"
-    self.record['command'] = self.say_hi
+    self.record['command'] = self.start_record
     self.record.pack(side='top')
 
     self.quit = tk.Button(self, text='QUIT', fg='red',
@@ -54,7 +54,7 @@ class Application(tk.Frame):
     print('closing the app')
     self.master.destroy()
 
-  def record(self):
+  def start_record(self):
     print('Begin Recording')
 
 def main():
