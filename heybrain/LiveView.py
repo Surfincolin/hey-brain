@@ -10,6 +10,8 @@ from tkinter import ttk
 
 import numpy as np
 
+from heybrain.Sampler import *
+
 class LiveView(tk.Frame):
 
   def __init__(self, parent, controller):
@@ -47,13 +49,18 @@ class LiveView(tk.Frame):
     self.canvas_tk_wid = self.canvas.get_tk_widget()
     self.canvas_tk_wid.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
 
+    self.board = Sampler()
+
     self.in_session = False
+    self.pool = np.zeros(shape=(4,1250), dtype=float)
 
   def show(self):
     print('show live view')
+    
 
     if not self.in_session:
       self.in_session = True
+      self.board.start_stream()
       self.ani = animation.FuncAnimation(self.fig, self.animate, interval=100)
       self.canvas.draw()
 
@@ -73,14 +80,23 @@ class LiveView(tk.Frame):
     '''
       The animate function for FuncAnimate 
     '''
-    print('animate')
-    # xList = self.x_values
+    # print('animate')
+    data = self.board.get_data()
+    chop = data.shape[1]
+    self.pool = np.concatenate((data[5:9], self.pool[:,:-chop]), axis=1)
+
+    xList = self.x_values
     # yList = self.eeg_sampler.getBuffer()[200:len(xList) + 200, :4].T # Offset by 100 to reduce the visibility of the filter lag
-    # yFlipped = []
-    # for elem in yList:
-    #   yFlipped.append(np.flip(elem))
-    # self.__plotMultilines(self.eeg_plot, xList, yFlipped)
+    yList = self.pool # Offset by 100 to reduce the visibility of the filter lag
+    yFlipped = []
+    for elem in yList:
+      yFlipped.append(np.flip(elem))
+    self.__plotMultilines(self.eeg_plot, xList, yFlipped)
 
     # xList = self.x_values
     # yList = np.flip(self.eeg_sampler.getPredictionValues().T[100:len(xList) + 100])
     # self.__plotMultilines(self.average_pred_plot, xList, [yList])
+
+  def kill(self):
+    self.board.stop_stream()
+    self.ani = None

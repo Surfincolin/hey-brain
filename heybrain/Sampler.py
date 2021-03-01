@@ -20,6 +20,7 @@ from brainflow.board_shim import BoardShim, BrainFlowInputParams, BoardIds
 # marker ch 23
 
 # sample rate 250
+SCALE_FACTOR_EEG = (4500000)/24/100/(2**23-1) # uV/count
 
 class Sampler:
   def __init__(self, port='/dev/cu.usbserial-DM0258I7', debug=False):
@@ -41,6 +42,7 @@ class Sampler:
 
   def start_stream(self):
     self.board.prepare_session()
+    self.board.config_board('1234')
     self.board.start_stream(5120)
     time.sleep(0.5)
     self.streaming = True
@@ -53,26 +55,85 @@ class Sampler:
     print('::: Stream Stopped :::')
 
   def get_data(self):
-    return self.board.get_board_data()
+    if self.streaming:
+      return self.board.get_board_data()
+    else:
+      print('not streaming')
+      return np.zeros(shape=(24, 25), dtype=float)
 
   def mark_event(self, event_id=0):
-    self.board.insert_marker(event_id)
+    if self.streaming:
+      self.board.insert_marker(event_id)
+    else:
+      print('event not saved, not streaming')
 
 
 
 # For testing purposes
 if __name__ == '__main__':
+  import random
+
+  import pickle
+
   sampler = Sampler()
   sampler.start_stream()
 
-  iterations = 0
-  while iterations < 20:
-    print(sampler.get_data()[8])
-    time.sleep(0.1)
-    if iterations == 10:
-      sampler.mark_event(2)
+  data = []
 
-    iterations += 1
+  events = [(1, 'Say Hey Brain'),
+            (2, 'Think Hey Brain'),
+            (3, 'Visualize talking to the computer'),
+            (4, 'Type this sentence out on the computer')]
+
+  stop_event = (9, 'Stop')
+
+
+  print('prepare yourself')
+  time.sleep(3)
+  data.append(sampler.get_data())
+  for i in range(16):
+    ev = random.choice(events)
+    sampler.mark_event(ev[0])
+    print(ev[1])
+    time.sleep(3)
+    sampler.mark_event(stop_event[0])
+    print(stop_event[1])
+    time.sleep(3 + random.randint(0,2))
+    data.append(sampler.get_data())
+    print('...')
+    print('...')
+    print('...')
+    print('...')
+    print('...')
+    print('...')
+    print('...')
+
+  print('done!')
+
+
+  # iterations = 0
+  # while iterations < 20:
+  #   # print(sampler.get_data()[0])
+  #   data.append(sampler.get_data())
+  #   time.sleep(0.1)
+  #   if iterations == 10:
+  #     sampler.mark_event(2)
+
+  #   iterations += 1
 
   sampler.stop_stream()
 
+  pickle_file = './Cogs189/hey-brain/data/raw_data_recording.pkl'
+  with open(pickle_file, 'wb') as file:  
+    pickle.dump(data, file)
+  # # print(len(data))
+  # for i in range(10):
+  #   print(random.choice(events)[1])
+
+
+    # Record and segment data
+    # Convert data from uV to V
+    # Bandpass Filter: (1-51 Hz, 3rd order)
+    # Bandstop Filter: (59.5-60.5 Hz, 4th order)
+    # Denoising (Undecided method)
+    # Convert to RMS value (What sized window is uses in the GUI?)

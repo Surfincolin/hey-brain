@@ -55,12 +55,17 @@ class Application(tk.Frame):
   def open_live_view(self):
     frame = LiveView(self.main_container, self)
     frame.grid(row=0, column=0, sticky='nsew')
-    # self.frames['LiveView'] = frame
+    self.frames['LiveView'] = frame
     frame.tkraise()
     frame.show()
 
   def close(self):
     print('closing the app')
+    for key, frame in self.frames.items():
+      frame.kill()
+      frame.destroy()
+      frame = None
+
     self.master.destroy()
 
   def start_record(self):
