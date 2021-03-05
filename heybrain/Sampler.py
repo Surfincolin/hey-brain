@@ -42,7 +42,7 @@ class Sampler:
 
   def start_stream(self):
     self.board.prepare_session()
-    self.board.config_board('1234')
+    # self.board.config_board('1234')
     self.board.start_stream(5120)
     time.sleep(0.5)
     self.streaming = True
@@ -75,7 +75,7 @@ if __name__ == '__main__':
 
   import pickle
 
-  sampler = Sampler()
+  sampler = Sampler(port='/dev/cu.usbserial-4')
   sampler.start_stream()
 
   data = []
@@ -91,12 +91,19 @@ if __name__ == '__main__':
   print('prepare yourself')
   time.sleep(3)
   data.append(sampler.get_data())
-  for i in range(16):
+  for i in range(20):
     ev = random.choice(events)
     sampler.mark_event(ev[0])
     print(ev[1])
     time.sleep(3)
     sampler.mark_event(stop_event[0])
+    print('...')
+    print('...')
+    print('...')
+    print('...')
+    print('...')
+    print('...')
+    print('...')
     print(stop_event[1])
     time.sleep(3 + random.randint(0,2))
     data.append(sampler.get_data())
@@ -123,7 +130,7 @@ if __name__ == '__main__':
 
   sampler.stop_stream()
 
-  pickle_file = './Cogs189/hey-brain/data/raw_data_recording.pkl'
+  pickle_file = './Cogs189/hey-brain/data/raw_data_recording-8ch-2.pkl'
   with open(pickle_file, 'wb') as file:  
     pickle.dump(data, file)
   # # print(len(data))
