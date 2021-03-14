@@ -1,26 +1,31 @@
 import time
 import numpy as np
-
-# import threading
-
-import brainflow
 from brainflow.board_shim import BoardShim, BrainFlowInputParams, BoardIds
-# from brainflow.data_filter import DataFilter, FilterTypes
 
-# Channel Info
+
+# Brainflow Channel Info
+# ======================
+# Cyton Channel Info
 # package ch 0
-# eeg chan assoc. ['Fp1', 'Fp2', 'C3', 'C4', 'P7', 'P8', 'O1', 'O2']
+ 
+# eeg chan assoc. ['Fp1', 'Fp2', 'C3', 'C4', 'P7', 'P8', 'O1', 'O2'] # Default
+# channels = np.array(['F9', 'F7', 'Fp1', 'Fp2', 'F8', 'F4', 'F3', 'Fz']) # Data set 2
+channels = np.array(['T3', 'F7', 'Fp1', 'Fp2', 'F8', 'F4', 'F3', 'T4']) # Data set 3
 # eeg ch  [1, 2, 3, 4, 5, 6, 7, 8]
-# board acc ch [9, 10, 11]
+ 
+# board accelerometer ch [9, 10, 11]
+
 # empty on cyton
-# other ch [12, 13, 14, 15, 16, 17, 18] 
-# anolog ch [19, 20, 21]
+# other ch [12, 13, 14, 15, 16, 17, 18]
+#  
+# analog ch [19, 20, 21]
 
 # timestamp ch 22
 # marker ch 23
 
 # sample rate 250
-SCALE_FACTOR_EEG = (4500000)/24/100/(2**23-1) # uV/count
+# Scale Factor      microVolts/gain/24bit 2'sC => 0.02235
+SCALE_FACTOR_EEG = (4500000)/24/(2**23-1) # uV/count
 
 class Sampler:
   def __init__(self, port='/dev/cu.usbserial-DM0258I7', debug=False):
@@ -42,8 +47,11 @@ class Sampler:
 
   def start_stream(self):
     self.board.prepare_session()
-    # self.board.config_board('1234')
-    self.board.start_stream(5120)
+
+    ring_buffer_size = 5120
+    self.board.start_stream(ring_buffer_size)
+
+    # Let the stream run for 1/2 a second
     time.sleep(0.5)
     self.streaming = True
     print('::: Streaming :::')
@@ -72,75 +80,55 @@ class Sampler:
 # For testing purposes
 if __name__ == '__main__':
   import random
-
   import pickle
 
   sampler = Sampler(port='/dev/cu.usbserial-4')
   sampler.start_stream()
+
+  NUM_RUNS = 35
+  SAMPLE_TIME = 3.5 # seconds
+  AVG_BREAK_TIME = 3 # +~2 seconds randomly
 
   data = []
 
   events = [(1, 'Say Hey Brain'),
             (2, 'Think Hey Brain'),
             (3, 'Visualize talking to the computer'),
-            (4, 'Type this sentence out on the computer')]
+            (4, 'Talk out loud')]
 
+  blink_event = (5, 'Blink Twice')
   stop_event = (9, 'Stop')
 
 
   print('prepare yourself')
-  time.sleep(3)
+  time.sleep(5)
+  # clear buffer
+  sampler.get_data()
+  # record eye blink event
+  print(blink_event[1])
+  sampler.mark_event(blink_event[0])
+  time.sleep(SAMPLE_TIME)
   data.append(sampler.get_data())
-  for i in range(20):
-    ev = random.choice(events)
-    sampler.mark_event(ev[0])
-    print(ev[1])
-    time.sleep(3)
-    sampler.mark_event(stop_event[0])
-    print('...')
-    print('...')
-    print('...')
-    print('...')
-    print('...')
-    print('...')
-    print('...')
-    print(stop_event[1])
-    time.sleep(3 + random.randint(0,2))
-    data.append(sampler.get_data())
-    print('...')
-    print('...')
-    print('...')
-    print('...')
-    print('...')
-    print('...')
-    print('...')
+  print('...\n...\n...\n...\n...\n...\n...')
+  time.sleep(5)
+
+  # begin actual runs
+  for i in range(NUM_RUNS):
+    random.shuffle(events)
+    for ev in events:
+      print(ev[1])
+      sampler.mark_event(ev[0])
+      time.sleep(SAMPLE_TIME)
+      print('...\n...\n...\n...\n...\n...\n...')
+      print(stop_event[1])
+      time.sleep(AVG_BREAK_TIME + random.uniform(0,2))
+      data.append(sampler.get_data())
+      print('...\n...\n...\n...\n...\n...\n...')
 
   print('done!')
 
-
-  # iterations = 0
-  # while iterations < 20:
-  #   # print(sampler.get_data()[0])
-  #   data.append(sampler.get_data())
-  #   time.sleep(0.1)
-  #   if iterations == 10:
-  #     sampler.mark_event(2)
-
-  #   iterations += 1
-
   sampler.stop_stream()
 
-  pickle_file = './Cogs189/hey-brain/data/raw_data_recording-8ch-2.pkl'
+  pickle_file = './Cogs189/hey-brain/data/raw_data_recording-8ch-3.pkl'
   with open(pickle_file, 'wb') as file:  
     pickle.dump(data, file)
-  # # print(len(data))
-  # for i in range(10):
-  #   print(random.choice(events)[1])
-
-
-    # Record and segment data
-    # Convert data from uV to V
-    # Bandpass Filter: (1-51 Hz, 3rd order)
-    # Bandstop Filter: (59.5-60.5 Hz, 4th order)
-    # Denoising (Undecided method)
-    # Convert to RMS value (What sized window is uses in the GUI?)
