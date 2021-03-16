@@ -82,7 +82,8 @@ if __name__ == '__main__':
   import random
   import pickle
 
-  sampler = Sampler(port='/dev/cu.usbserial-4')
+  sampler = Sampler()
+  # sampler = Sampler(port='/dev/cu.usbserial-4')
   sampler.start_stream()
 
   NUM_RUNS = 35
@@ -125,10 +126,18 @@ if __name__ == '__main__':
       data.append(sampler.get_data())
       print('...\n...\n...\n...\n...\n...\n...')
 
+  # record eye blink event
+  print(blink_event[1])
+  sampler.mark_event(blink_event[0])
+  time.sleep(SAMPLE_TIME)
+  data.append(sampler.get_data())
+  print('...\n...\n...\n...\n...\n...\n...')
+  time.sleep(5)
+
   print('done!')
 
   sampler.stop_stream()
 
-  pickle_file = './Cogs189/hey-brain/data/raw_data_recording-8ch-3.pkl'
+  pickle_file = '/Users/colinwageman/Desktop/School/Cogs189/hey-brain/data/raw_data_recording-8ch-3.pkl'
   with open(pickle_file, 'wb') as file:  
     pickle.dump(data, file)
