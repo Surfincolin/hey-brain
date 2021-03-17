@@ -2,7 +2,7 @@
 Attempt at creating a BCI that filters online eeg data from a Cyton Board and classifies and engagement command.
 
 ### Instruction
-To run, extract the contents of the **data_extract_here.zip** folder to the **data** folder. From there, I recommend running the **data_exploration.ipynb** or ***ERP_Classification.ipynd** notebooks.
+To run, extract the contents of the **data_extract_here.zip** folder to the **data** folder. From there, I recommend running the **data_exploration.ipynb** or **ERP_Classification.ipynd** notebooks.
 
 If you are looking to record data off the Cyton board with the prompted events, look at the **TrialRecorder.py**
 
